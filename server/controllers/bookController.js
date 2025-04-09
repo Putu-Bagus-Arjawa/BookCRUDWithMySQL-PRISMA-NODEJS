@@ -11,7 +11,7 @@ export const createBook = async(req, res)=>{
         });
 
         if (!author) {
-            return res.status(400).json({ error: 'Author tidak ditemukan' });
+            return res.status(400).json({ error: 'Author tidak ditemukan, kaw salah masukin email!' });
         }
 
         const book = await prisma.book.create({
@@ -32,7 +32,12 @@ export const getBooks = async (req, res)=>{
                 author: true
             }
         })
+
+        if (books.length === 0){
+            res.status(404).json({message: "Maaf sayang, data yang kau cari ga ada 😭"})
+        }
         res.status(200).json(books)
+        
     } catch (error) {
         res.status(500).json({ error: error.message });
     }
@@ -58,26 +63,21 @@ export const getBookById = async (req, res)=>{
 }
 
 export const updateBook = async (req, res)=>{
-    const {id} = req.params;
-    const {judul, authorEmail} = req.body;
-
     try {
-
-        const bookExist = await prisma.book.findUnique({
-            where:{ id: parseInt(id)}
-        })
-
-        if(!bookExist){
-            res.status(404).json({message: "book that you're looking not found"})
+        const {id} = req.params;
+        if (!id || isNaN(id)) {
+            return res.status(400).json({ error: "ID buku invalid!" });
         }
-        const updateBook = await prisma.book.update({
-            where:{id: parseInt(id)},
-            data:{
-                judul: judul || bookExist.judul,
-                authorEmail: authorEmail|| bookExist.authorEmail
-            }
-        })
-        res.status(200).json(updateBook)
+        const {judul, authorEmail} = req.body;
+        if (!judul || !authorEmail) {
+            return res.status(400).json({ error: "Judul & email wajib diisi!" });
+        }
+        const updatedBook = await prisma.book.update({
+            where: { id: parseInt(id) },
+            data: { judul, authorEmail }
+        });
+      
+        res.status(200).json(updatedBook)
 
     } catch (error) {
         res.status(400).json({error: error.message})
