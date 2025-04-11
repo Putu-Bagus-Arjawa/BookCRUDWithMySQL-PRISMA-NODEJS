@@ -5,17 +5,33 @@ const prisma = new PrismaClient()
 export const createBook = async(req, res)=>{
     const {judul, authorEmail} = req.body;
 
+    if (!judul || !authorEmail){
+        return res.status(400).json({message: "Isi dulu bre judul dan authorEmail nya!"})
+    }
     try {
-        const author = await prisma.author.findUnique({
-            where: { email: authorEmail }
-        });
 
-        if (!author) {
-            return res.status(400).json({ error: 'Author tidak ditemukan, kaw salah masukin email!' });
+        const checkAuthornya = await prisma.author.findUnique({
+            where:{email: authorEmail}
+        })
+
+        if (!checkAuthornya){
+            return res.status(404).json({message: `Author dengan email ${authorEmail} tidak ada`})
+        }
+
+        const checkBookExist = await prisma.book.findFirst({
+            where:{
+                authorEmail:authorEmail,
+                judul: judul,
+            }
+        })
+        if(checkBookExist){
+            return res.status(400).json({message: "buku dah ada bre😑"})
         }
 
         const book = await prisma.book.create({
-            data:{judul,authorEmail}
+            data:{
+                judul, 
+                authorEmail}
         })
 
         res.status(201).json(book)
@@ -34,7 +50,7 @@ export const getBooks = async (req, res)=>{
         })
 
         if (books.length === 0){
-            res.status(404).json({message: "Maaf sayang, data yang kau cari ga ada 😭"})
+            return res.status(404).json({message: "Maaf sayang, data yang kau cari ga ada 😭"})
         }
         res.status(200).json(books)
         
