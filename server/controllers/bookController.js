@@ -69,7 +69,9 @@ export const getBookById = async (req, res)=>{
             }
         })
         if (!book) {
-            return res.status(404).json({ error: 'Book not found' });
+            return res.status(404).json({
+                message: "Bukunya ga ada bre😫", 
+                suggestion:"cek apakah data anda, jika tidak ada, buat data baru dulu!"});
         }
 
         res.status(200).json(book)
@@ -78,25 +80,43 @@ export const getBookById = async (req, res)=>{
     }
 }
 
-export const updateBook = async (req, res)=>{
+export const updateBook = async (req, res) => {
+    const { id } = req.params;
+
+    if (!id || isNaN(id)) {
+        return res.status(400).json({ error: "ID buku invalid!" });
+    }
+
     try {
-        const {id} = req.params;
-        if (!id || isNaN(id)) {
-            return res.status(400).json({ error: "ID buku invalid!" });
-        }
-        const {judul, authorEmail} = req.body;
+        const { judul, authorEmail } = req.body;
+
+        
         if (!judul || !authorEmail) {
-            return res.status(400).json({ error: "Judul & email wajib diisi!" });
+            return res.status(400).json({ 
+                error: "Isi Semuanya lmao" 
+            });
         }
+
         const updatedBook = await prisma.book.update({
-            where: { id: parseInt(id) },
-            data: { judul, authorEmail }
+            where: { 
+                id: parseInt(id) 
+            },
+            data: { 
+                judul, 
+                authorEmail 
+            }
         });
       
-        res.status(200).json(updatedBook)
-
+        res.status(200).json(updatedBook);
     } catch (error) {
-        res.status(400).json({error: error.message})
+        
+        if (error.code === 'P2025') {
+            return res.status(404).json({
+                message: "Data tidak ditemukan 😫",
+                suggestion: "Cek ID buku atau buat data baru terlebih dahulu"
+            });
+        }
+        res.status(500).json({ error: error.message });
     }
 }
 
